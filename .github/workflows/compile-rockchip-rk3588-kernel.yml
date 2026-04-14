@@ -194,6 +194,8 @@ jobs:
           ccache_clear: ${{ inputs.ccache_clear }}
           docker_hostpath: /builder
           docker_image: ophub/armbian-${{ inputs.docker_image }}:arm64
+          kernel_patch: kernel-patch/beta
+          auto_patch: true
 
       - name: Upload Kernel to Release
         uses: ncipollo/release-action@main

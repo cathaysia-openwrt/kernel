@@ -1,0 +1,51 @@
+--- a/arch/arm64/boot/dts/rockchip/rk3588-hlink-h88k.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3588-hlink-h88k.dts
+@@ -2,6 +2,8 @@
+ // Copyright (c) 2023 Flippy <flippy@sina.com>
+
+ /dts-v1/;
++#include <dt-bindings/clock/rk3588-cru.h>
++#include <dt-bindings/gpio/gpio.h>
+
+ #include "rk3588-hlink.dtsi"
+
+@@ -22,11 +24,39 @@
+ 	};
+ };
+
++&vcc_mipidcphy0 {
++	status = "disabled";
++};
++
+ &sata0 {
+ 	status = "okay";
+ 	target-supply = <&vcc3v3_m2_sata>;
+ };
+
++&spi4 {
++	assigned-clocks = <&cru CLK_SPI4>;
++	assigned-clock-rates = <200000000>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&spi4m2_pins &spi4m2_cs0>;
++	num-cs = <1>;
++	status = "okay";
++
++	panel@0 {
++		compatible = "sitronix,st7789v";
++		reg = <0>;
++		dc-gpios = <&gpio1 RK_PA4 GPIO_ACTIVE_HIGH>;
++		spi-max-frequency = <1000000>;
++		width = <135>;
++		height = <240>;
++		buswidth = <8>;
++		rotate = <90>;
++		x-offset = <40>;
++		y-offset = <52>;
++		spi-cpol;
++		spi-cpha;
++	};
++};
++
+ &combphy0_ps {
+ 	status = "okay";
+ 	pinctrl-0 = <&sata0_pm_reset>;

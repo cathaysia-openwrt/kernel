@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: loongtao.zhang <loongtao.zhang@outlook.com>
+Date: Wed, 15 Apr 2026 14:05:00 +0800
+Subject: [PATCH] drivers: staging: fbtft: fb_st7789v: support panel offsets
+
+Some 135x240 ST7789V panels only expose a smaller visible window inside
+the controller's full GRAM. Hlink's front LCD on the H88K needs a fixed
+column/row offset; without it the picture is shifted to the upper-left
+corner and part of the rendered content is outside the visible area.
+
+Allow the DT node to provide x/y offsets and apply them when programming
+the controller address window.
+
+---
+ drivers/staging/fbtft/fb_st7789v.c | 29 +++++++++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+
+diff --git a/drivers/staging/fbtft/fb_st7789v.c b/drivers/staging/fbtft/fb_st7789v.c
+index 944e1f5f8a1d..87f5b2e6cf65 100644
+--- a/drivers/staging/fbtft/fb_st7789v.c
++++ b/drivers/staging/fbtft/fb_st7789v.c
+@@ -211,6 +211,31 @@ static int write_vmem(struct fbtft_par *par, size_t offset, size_t len)
+ 	return ret;
+ }
+
++static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
++{
++	struct device *dev = par->info->device;
++	u32 x_offset = 0;
++	u32 y_offset = 0;
++
++	device_property_read_u32(dev, "x-offset", &x_offset);
++	device_property_read_u32(dev, "y-offset", &y_offset);
++
++	xs += x_offset;
++	xe += x_offset;
++	ys += y_offset;
++	ye += y_offset;
++
++	write_reg(par, MIPI_DCS_SET_COLUMN_ADDRESS,
++		  (xs >> 8) & 0xFF, xs & 0xFF,
++		  (xe >> 8) & 0xFF, xe & 0xFF);
++
++	write_reg(par, MIPI_DCS_SET_PAGE_ADDRESS,
++		  (ys >> 8) & 0xFF, ys & 0xFF,
++		  (ye >> 8) & 0xFF, ye & 0xFF);
++
++	write_reg(par, MIPI_DCS_WRITE_MEMORY_START);
++}
++
+ /**
+  * set_var() - apply LCD properties like rotation and BGR mode
+  *
+@@ -320,6 +345,7 @@ static struct fbtft_display display = {
+ 	.gamma = HSD20_IPS_GAMMA,
+ 	.fbtftops = {
+ 		.init_display = init_display,
++		.set_addr_win = set_addr_win,
+ 		.write_vmem = write_vmem,
+ 		.set_var = set_var,
+ 		.set_gamma = set_gamma,
+--
+2.39.5
