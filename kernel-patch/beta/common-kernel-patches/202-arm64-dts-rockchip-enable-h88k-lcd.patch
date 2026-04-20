@@ -2,33 +2,45 @@
 +++ b/arch/arm64/boot/dts/rockchip/rk3588-hlink-h88k.dts
 @@ -2,6 +2,8 @@
  // Copyright (c) 2023 Flippy <flippy@sina.com>
-
+ 
  /dts-v1/;
 +#include <dt-bindings/clock/rk3588-cru.h>
 +#include <dt-bindings/gpio/gpio.h>
-
+ 
  #include "rk3588-hlink.dtsi"
-
-@@ -22,11 +24,39 @@
+ 
+@@ -9,6 +11,11 @@
+ 	model = "Hlink H88K";
+ 	compatible = "hlink,h88k", "rockchip,rk3588";
+ 
++	aliases {
++		ethernet1 = &rtl8125_1;
++		ethernet2 = &rtl8125_2;
++	};
++
+ 	vcc3v3_m2_sata: vcc3v3-m2-sata {
+ 		compatible = "regulator-fixed";
+ 		regulator-name = "vcc3v3_m2_sata";
+@@ -22,11 +29,62 @@
  	};
  };
-
+ 
 +&vcc_mipidcphy0 {
 +	status = "disabled";
 +};
 +
  &sata0 {
- 	status = "okay";
- 	target-supply = <&vcc3v3_m2_sata>;
- };
-
++	status = "disabled";
++};
++
 +&spi4 {
 +	assigned-clocks = <&cru CLK_SPI4>;
 +	assigned-clock-rates = <200000000>;
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&spi4m2_pins &spi4m2_cs0>;
 +	num-cs = <1>;
-+	status = "okay";
+ 	status = "okay";
+-	target-supply = <&vcc3v3_m2_sata>;
 +
 +	panel@0 {
 +		compatible = "sitronix,st7789v";
@@ -43,6 +55,30 @@
 +		y-offset = <52>;
 +		spi-cpol;
 +		spi-cpha;
++	};
+ };
+ 
++&pcie2x1l2 {
++	reset-gpios = <&gpio4 RK_PA5 GPIO_ACTIVE_HIGH>;
++	status = "okay";
++
++	pcie@0,0 {
++		reg = <0x000000 0 0 0 0>;
++		#address-cells = <3>;
++		#size-cells = <2>;
++
++		bus-range = <0x40 0x4f>;
++		device_type = "pci";
++		ranges;
++
++		rtl8125_2: pcie-eth@0,0 {
++			compatible = "pci10ec,8125";
++			label = "eth2";
++			reg = <0x000000 0 0 0 0>;
++
++			r8125,led2 = <0x0200>;
++			r8125,led3 = <0x002a>;
++		};
 +	};
 +};
 +
